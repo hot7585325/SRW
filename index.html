@@ -4,94 +4,22 @@
 <head>
     <meta charset="UTF-8">
     <title>Three.js GLTFLoader Example</title>
-    <style>
-        body {
-            margin: 0;
-            overflow: hidden;
-            background-color: rgba(101, 219, 255, 0.986);
-        }
-
-        canvas {
-            display: block;
-        }
-
-        #MobilePanel {
-            position: fixed;
-            pointer-events: none;
-            width: 100vw;
-            height: 100vh;
-            background-color: rgba(255, 255, 255, 0);
-        }
-
-        #TitlePanel {
-            position: absolute;
-            width: 100vw;
-            height: 15vh;
-            top: 0%;
-            background-color: black;
-            text-align: center;
-            font-size: 2em;
-            color: white;
-        }
-
-        #ButtonPanel {
-            position: absolute;
-            display: flex;
-            justify-content: center;
-            /* 水平置中 */
-            align-items: center;
-            /* 垂直置中 */
-            gap: 5%;
-            width: 100vw;
-            height: 15vh;
-            bottom: 10%;
-            background-color: rgba(0, 108, 250, 0.616);
-
-        }
-
-        #ButtonPanel button {
-            pointer-events: auto;
-            text-align: center;
-            width: 20%;
-            height: auto;
-            font-size: 3em;
-        }
-
-        #InfoPanel {
-            pointer-events: auto;
-            position: absolute;
-            display: none;
-            width: 100vw;
-            height: 100vh;
-            background-color: rgb(22, 48, 131);
-            text-align: center;
-        }
-
-        #InfoPanel p {
-            top: 50%;
-            text-align: center;
-            font: 5em;
-            color: #ffffff;
-        }
-
-        #InfoPanel button {
-            bottom: 0%;
-            text-align: center;
-        }
-    </style>
     <!-- 網頁用Console -->
     <!-- <script src="https://cdn.bootcdn.net/ajax/libs/vConsole/3.15.0/vconsole.min.js"></script>
   <script>  var vConsole = new VConsole();  </script> -->
 
     <!-- GLTFLoader中的import有使用 from 'three';，如果不用importmap會導致找不到模組 -->
     <script type="importmap">
-{
-  "imports": {
-    "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js"
-  }
-}
+    {
+        "imports": 
+            {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js"
+            }
+    }
 </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+
 </head>
 
 
@@ -106,13 +34,14 @@
 
 
         <div id="ButtonPanel">
-            <button id="ShowMark"> 關閉Mark</button>
-            <button id="small_fire"> 顯示Mark</button>
-            <button id="turn"> 管線</button>
+            <button id="HideMark"> 關閉Mark</button>
+            <button id="ShowMark"> 顯示Mark</button>
+            <button id="TubeAni"> 管線動畫</button>
         </div>
 
         <div id="InfoPanel">
-            <p> 這是一個水利設施的簡介</p>
+            <h1> 這是一個水利設施的簡介</h1>
+            <p>這裡是內容</p>
             <button id="infobtn">關閉</button>
         </div>
 
@@ -124,22 +53,21 @@
         import { OrbitControls } from "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/controls/OrbitControls.js";
         import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/loaders/GLTFLoader.js';
         import { AnimationMixer } from 'three';
+        import { ECP } from "./ECP_ThreeMidth.js";
         // 建立場景
         const scene = new THREE.Scene();
         // scene.background = new THREE.Color(255, 0, 0);
 
-        //動畫用
-        const clock = new THREE.Clock();
-        const mixers = [];   //陣列存取動畫
-        const actions = [];
-        let placedMesh = new THREE.Group();  //空物件 手勢控制用
-        let FireAni = null;
-        let PieAni = null;
-        let IsPlay_Ani_Pie = false;
+        const ecp = new ECP();
+
 
         // 相機
         const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
         camera.position.set(0, 5, 5);
+
+        //動畫開關
+        let TubeAni = true;
+        let MarkAni = true;
 
         // 渲染器
         const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -167,16 +95,18 @@
 
         function Main() {
 
-            placedMesh.position.set(0, 0, 0);
-            scene.add(placedMesh);
-
+            ecp.placedMesh.position.set(0, 0, 0);
+            scene.add(ecp.placedMesh);
 
             //主模型
             loader.load(
-                "src\\Model\\SRW.glb",
+                "src/Model/SRW.glb",
                 (gltf) => {
-                    PieAni = Set_Model_Attribute(gltf);
+                    ecp.Set_Model_Attribute(gltf, 0);
+                    ecp.Register_UV_Ani("Tube", "map", 0, .001, scene);
 
+                    // console.log("gltf.scene 結構：", gltf.scene);
+                    // console.log("gltf.scene.children.length：", gltf.scene.children.length);
                 },
                 (xhr) => {
                     console.log((xhr.loaded / xhr.total * 100) + "% loaded");
@@ -186,7 +116,9 @@
                 }
             );
 
-            raycastShowDOM("Mark", 'InfoPanel')
+            ecp.raycastShowDOM("Mark", 'InfoPanel', renderer, camera, scene)
+
+
 
             // 視窗大小自適應
             window.addEventListener("resize", () => {
@@ -200,199 +132,26 @@
 
         function DOMCtrl() {
             //dom賦值
-            const ShowMark = document.getElementById("ShowMark")
-            const small_fire = document.getElementById("small_fire")
-            const turn = document.getElementById("turn")
-            const InfoPanel = document.getElementById("InfoPanel")
-            const infobtn = document.getElementById("infobtn")
+            const ids = ["HideMark", "ShowMark", "TubeAni", "InfoPanel", 'infobtn'];
+            const dom = ecp.mapDomByIds(ids);
 
-
-            infobtn.addEventListener("click", () => { GSAP_DOM_Active("InfoPanel", false) })
-            ShowMark.addEventListener("click", () => { GSAP_Model_Active("Mark", false) })
-            small_fire.addEventListener("click", () => { GSAP_Model_Active("Mark", true) })
-            turn.addEventListener("click", () => {
-                IsPlay_Ani_Pie = !IsPlay_Ani_Pie;
-                if (IsPlay_Ani_Pie) {
-                    PieAni.play();
-                } else {
-                    PieAni.stop();
-                }
-
-            })
+            dom.infobtn.addEventListener("click", () => { ecp.GSAP_DOM_Active("InfoPanel", false) })
+            dom.HideMark.addEventListener("click", () => { ecp.GSAP_Model_Active("Mark", false, scene) })
+            dom.ShowMark.addEventListener("click", () => { MarkAni = !MarkAni; ecp.GSAP_Model_Active("Mark", MarkAni, scene) })
+            dom.TubeAni.addEventListener("click", () => { TubeAni = !TubeAni; ecp.Set_UV_Ani_Enabled("Tube", TubeAni); })
 
         }
 
 
-        //dom位移動畫
-        function gsapToggleById(domId, show, options = {}) {
-            const el = document.getElementById(domId);
-            if (!el) return;
-
-            // 預設值（可被 options 覆蓋）
-            const {
-                x = 0,
-                y = 0,
-                scale = 1,
-                opacity = 1,
-                duration = 0.5,
-                ease = "power2.out",
-                delay = 0,
-                onComplete = null
-            } = options;
-
-            if (show) {
-                el.style.display = "block";
-                gsap.to(el, {
-                    x,
-                    y,
-                    scale,
-                    opacity,
-                    duration,
-                    ease,
-                    delay,
-                    onComplete
-                });
-            } else {
-                gsap.to(el, {
-                    x: 0,
-                    y: 0,
-                    scale: 1,
-                    opacity: 0,
-                    duration,
-                    ease: "power2.in",
-                    delay,
-                    onComplete: () => {
-                        el.style.display = "none";
-                        if (onComplete) onComplete();
-                    }
-                });
-            }
-        }
-
-
-        //獲取Model
-        function GetModelMesh(MeshName) {
-            const model = scene.getObjectByName(MeshName);
-            return model;
-        }
-
-        //射線模型觸發dom
-        function raycastShowDOM(MeshName, domId) {
-            const raycaster = new THREE.Raycaster();
-            const mouse = new THREE.Vector2();
-
-            // 綁定滑鼠點擊事件
-            renderer.domElement.addEventListener('click', event => {
-                const rect = renderer.domElement.getBoundingClientRect();
-                mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-                mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-
-                raycaster.setFromCamera(mouse, camera);
-
-                const targetMesh = scene.getObjectByName(MeshName);
-                if (!targetMesh) return;
-
-                const intersects = raycaster.intersectObject(targetMesh, true);
-                if (intersects.length > 0) {
-                    const el = document.getElementById(domId);
-                    if (el) {
-                        // el.style.display = 'block';
-                        GSAP_DOM_Active(domId, true)
-                        console.log("打開dom")
-                    }
-                }
-            });
-        }
-
-        //Model顯示
-        function GSAP_Model_Active(MeshName, show) {
-            const model = scene.getObjectByName(MeshName);
-            if (!model) return;
-            if (show) {
-                model.visible = true;
-                gsap.fromTo(model.scale,
-                    { x: 0, y: 0, z: 0 },
-                    {
-                        x: 1, y: 1, z: 1,
-                        duration: 0.6,
-                        ease: "bounce.out"
-                    }
-                );
-            } else {
-                gsap.to(model.scale, {
-                    x: 0, y: 0, z: 0,
-                    duration: 0.4,
-                    ease: "power2.in",
-                    onComplete: () => {
-                        model.visible = false;
-                    }
-                });
-            }
-        }
-
-        //dom顯示
-        function GSAP_DOM_Active(id, show) {
-            const el = document.getElementById(id);
-            if (!el) return;
-            if (show) {
-                // 顯示並彈跳出現
-                el.style.display = "block";
-                gsap.fromTo(el,
-                    { scale: 0, y: 50, opacity: 0 },
-                    {
-                        scale: 1,
-                        y: 0,
-                        opacity: 1,
-                        duration: 0.6,
-                        ease: "bounce.out"
-                    }
-                );
-            } else {
-                // 縮小並消失
-                gsap.to(el, {
-                    scale: 0,
-                    y: 50,
-                    opacity: 0,
-                    duration: 0.4,
-                    ease: "power2.in",
-                    onComplete: () => {
-                        el.style.display = "none";
-                    }
-                });
-            }
-        }
-
-        //設定model相關參數(不需要使用 scene.add(_model)，因為作為容器的placedMesh已經實作了)
-        function Set_Model_Attribute(gltf, AniIndex = 0) {
-
-            const _model = gltf.scene;
-            //加到以實作scene.add，的容器中
-            placedMesh.add(_model);
-
-            //轉換
-            _model.position.set(0, 0, 0); // 相對於 placedMesh 的位置
-            _model.quaternion.identity(); // 清除旋轉（可選）
-            _model.scale.setScalar(0.5);  // 設定縮放
-
-
-            //動畫
-            const _mixer = new AnimationMixer(_model);
-            const clip = gltf.animations[AniIndex];
-            const _action = _mixer.clipAction(clip);
-            // 儲存到陣列
-            mixers.push(_mixer);
-            actions.push(_action);
-
-            return _action;
-        }
 
         // 動畫迴圈
         function animate() {
             requestAnimationFrame(animate);
             controls.update();
             // 更新動畫時間軸
-            const delta = clock.getDelta();
-            mixers.forEach(mixer => mixer.update(delta));
+            const delta = ecp.clock.getDelta();
+            ecp.mixers.forEach(mixer => mixer.update(delta));
+            ecp.update_UVAni();
             renderer.render(scene, camera);
         }
 
