@@ -19,10 +19,16 @@
   #TitlePanel {
       position: absolute;
       width: 100vw;
-      height: 15vh;
+      height: 10vh;
       top: 0%;
       background-color: black;
       text-align: center;
+      font-size: 2em;
+  }
+
+   #TitlePanel h1{
+    position:relative;
+      top: 0%;
       font-size: 2em;
       color: white;
   }
@@ -36,7 +42,7 @@
       /* 垂直置中 */
       gap: 5%;
       width: 100vw;
-      height: 15vh;
+      height: 10vh;
       bottom: 10%;
       background-color: rgba(0, 108, 250, 0.616);
 
@@ -45,7 +51,7 @@
   #ButtonPanel button {
       pointer-events: auto;
       text-align: center;
-      width: 20%;
+      width: auto;
       height: auto;
       font-size: 3em;
   }
