@@ -29,20 +29,24 @@
     <div id="MobilePanel">
 
         <div id="TitlePanel">
-            <h1>水利設施模擬</h1>
+            <h1>地形設施模擬</h1>
         </div>
 
 
         <div id="ButtonPanel">
-            <button id="HideMark"> 關閉Mark</button>
             <button id="ShowMark"> 顯示Mark</button>
             <button id="TubeAni"> 管線動畫</button>
         </div>
 
-        <div id="InfoPanel">
-            <h1> 這是一個水利設施的簡介</h1>
+        <div class="InfoPanel" id="InfoPanel_A">
+            <h1> 水利設施A的簡介</h1>
             <p>這裡是內容</p>
-            <button id="infobtn">關閉</button>
+            <button id="infobtn_A">關閉</button>
+        </div>
+        <div class="InfoPanel" id="InfoPanel_B">
+            <h1> 水利設施B的簡介</h1>
+            <p>這裡是內容</p>
+            <button id="infobtn_B">關閉</button>
         </div>
 
     </div>
@@ -103,8 +107,10 @@
                 "src/Model/SRW.glb",
                 (gltf) => {
                     ecp.Set_Model_Attribute(gltf, 0);
-                    ecp.Register_UV_Ani("Tube", "map", 0, .001, scene);
 
+                    //註冊UV動畫
+                    ecp.Register_UV_Ani("Tube", "map", 0, .001, scene);
+                    ecp.Register_UV_Ani("River", "map", 0, .0001, scene);
                     // console.log("gltf.scene 結構：", gltf.scene);
                     // console.log("gltf.scene.children.length：", gltf.scene.children.length);
                 },
@@ -116,8 +122,9 @@
                 }
             );
 
-            ecp.raycastShowDOM("Mark", 'InfoPanel', renderer, camera, scene)
-
+            //擊中模型打開DOM
+            ecp.raycastShowDOM("Mark_A", 'InfoPanel_A', renderer, camera, scene)
+            ecp.raycastShowDOM("Mark_B", 'InfoPanel_B', renderer, camera, scene)
 
 
             // 視窗大小自適應
@@ -132,12 +139,12 @@
 
         function DOMCtrl() {
             //dom賦值
-            const ids = ["HideMark", "ShowMark", "TubeAni", "InfoPanel", 'infobtn'];
+            const ids = ["ShowMark", "TubeAni", "InfoPanel", 'infobtn_A', "infobtn_B","InfoPanel_A","InfoPanel_B"];
             const dom = ecp.mapDomByIds(ids);
 
-            dom.infobtn.addEventListener("click", () => { ecp.GSAP_DOM_Active("InfoPanel", false) })
-            dom.HideMark.addEventListener("click", () => { ecp.GSAP_Model_Active("Mark", false, scene) })
-            dom.ShowMark.addEventListener("click", () => { MarkAni = !MarkAni; ecp.GSAP_Model_Active("Mark", MarkAni, scene) })
+            dom.InfoPanel_A.addEventListener("click", () => { ecp.GSAP_DOM_Active("InfoPanel_A", false) })
+            dom.InfoPanel_B.addEventListener("click", () => { ecp.GSAP_DOM_Active("InfoPanel_B", false) })
+            dom.ShowMark.addEventListener("click", () => { MarkAni = !MarkAni; ecp.GSAP_Model_Active("Mark_A", MarkAni, scene); ecp.GSAP_Model_Active("Mark_B", MarkAni, scene); })
             dom.TubeAni.addEventListener("click", () => { TubeAni = !TubeAni; ecp.Set_UV_Ani_Enabled("Tube", TubeAni); })
 
         }
