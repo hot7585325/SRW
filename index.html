@@ -109,10 +109,8 @@
                     ecp.Set_Model_Attribute(gltf, 0);
 
                     //註冊UV動畫
-                    ecp.Register_UV_Ani("Tube", "map", 0, .001, scene);
-                    ecp.Register_UV_Ani("River", "map", 0, .0001, scene);
-                    // console.log("gltf.scene 結構：", gltf.scene);
-                    // console.log("gltf.scene.children.length：", gltf.scene.children.length);
+                    ecp.Register_UV_Ani("Tube", "map", 0, .01, scene);
+                    ecp.Register_UV_Ani("River", "map", 0, .001, scene);
                 },
                 (xhr) => {
                     console.log((xhr.loaded / xhr.total * 100) + "% loaded");
@@ -125,6 +123,8 @@
             //擊中模型打開DOM
             ecp.raycastShowDOM("Mark_A", 'InfoPanel_A', renderer, camera, scene)
             ecp.raycastShowDOM("Mark_B", 'InfoPanel_B', renderer, camera, scene)
+            ecp.CameraFocusTarget("Target_A",2,renderer, camera, scene)
+            ecp.CameraFocusTarget("Target_A001",2,renderer, camera, scene)
 
 
             // 視窗大小自適應

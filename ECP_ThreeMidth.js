@@ -81,8 +81,11 @@ export class ECP {
             });
         }
     }
-    //射線模型觸發DOM
-    raycastShowDOM(MeshName, domId, renderer, camera, scene) {
+
+
+
+    //射線專用
+    RaycastHitMesh(MeshName, renderer, camera, scene, onHit) {
         const raycaster = new THREE.Raycaster();
         const mouse = new THREE.Vector2();
 
@@ -98,13 +101,55 @@ export class ECP {
 
             const intersects = raycaster.intersectObject(targetMesh, true);
             if (intersects.length > 0) {
+                // return intersects;
+                onHit(intersects); // ✅ 呼叫外部 callback
+            }
+        })
+    }
+
+    //鏡頭移動-射線獲取Hitpoint位置
+    CameraFocusTarget(meshName, duration, renderer, camera, scene) {
+
+
+        this.RaycastHitMesh(meshName,renderer, camera, scene, (intersects) => {
+
+            const hitPoint = intersects[0].point;
+            const offset = new THREE.Vector3(0, 0.1, 0.1); // ✅ 可調整視角距離
+            const targetPos = hitPoint.clone().add(offset);
+
+            // ✅ 使用 GSAP 平滑移動相機
+            gsap.to(camera.position,
+                {
+                    x: targetPos.x,
+                    y: targetPos.y,
+                    z: targetPos.z,
+                    duration: duration,
+                    ease: "power2.inOut",
+                    onUpdate: () => {
+                        camera.lookAt(hitPoint);
+                    }
+                });
+
+            console.log(`🎯 相機正在平滑移動至 ${meshName} 的擊中點`, hitPoint);
+
+        });
+
+    }
+
+    //射線模型觸發DOM
+    raycastShowDOM(meshName, domId, renderer, camera, scene) {
+
+        this.RaycastHitMesh(meshName,renderer, camera, scene, (intersects) => {
+            if (intersects.length > 0) {
                 const el = document.getElementById(domId);
                 if (el) {
                     this.GSAP_DOM_Active(domId, true);
                     console.log("打開dom");
                 }
-            }
+
+            };
         });
+
     }
 
     //DOM位移動畫
