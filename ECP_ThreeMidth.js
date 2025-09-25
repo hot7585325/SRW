@@ -82,7 +82,69 @@ export class ECP {
         }
     }
 
+    //solo模式
+    toggleSoloModel(modelName, isSolo, scene) {
+        // 初始化快取表（只建立一次）
+        if (!this.originalMaterialState) {
+            this.originalMaterialState = {};
+        }
 
+        scene.traverse(obj => {
+            if (obj.isMesh && obj.material) {
+                const uuid = obj.uuid;
+                const isTarget = obj.name === modelName;
+
+                // ✅ 第一次記錄原始狀態
+                if (!this.originalMaterialState[uuid]) {
+                    this.originalMaterialState[uuid] = {
+                        opacity: obj.material.opacity,
+                        transparent: obj.material.transparent,
+                        visible: obj.visible
+                    };
+                }
+
+                // ✅ 啟動 SOLO 模式
+                if (isSolo) {
+                    obj.material.transparent = true;
+                    obj.material.depthWrite = false;
+
+                    gsap.to(obj.material, {
+                        opacity: isTarget ? 1 : 0,
+                        duration: 1.5,
+                        ease: "power2.out",
+                        onStart: () => {
+                            obj.visible = true;
+                        },
+                        onComplete: () => {
+                            if (!isTarget) obj.visible = false;
+                        }
+                    });
+                }
+
+                // ✅ 取消 SOLO 模式，還原原始狀態
+                else {
+                    const state = this.originalMaterialState[uuid];
+                    if (state) {
+                        obj.visible = true;
+                        obj.material.transparent = true; // 先保留透明，讓動畫能執行
+
+                        gsap.to(obj.material, {
+                            opacity: state.opacity,
+                            duration: 1,
+                            ease: "power2.out",
+                            onComplete: () => {
+                                obj.material.transparent = state.transparent;
+                                obj.material.depthWrite = true;
+                                obj.visible = state.visible;
+                            }
+                        });
+                    }
+                }
+            }
+        });
+
+        console.log(`🎯 SOLO 模式 ${isSolo ? "啟動" : "取消"}：${modelName}`);
+    }
 
     //射線專用
     RaycastHitMesh(MeshName, renderer, camera, scene, onHit) {
@@ -111,7 +173,7 @@ export class ECP {
     CameraFocusTarget(meshName, duration, renderer, camera, scene) {
 
 
-        this.RaycastHitMesh(meshName,renderer, camera, scene, (intersects) => {
+        this.RaycastHitMesh(meshName, renderer, camera, scene, (intersects) => {
 
             const hitPoint = intersects[0].point;
             const offset = new THREE.Vector3(0, 0.1, 0.1); // ✅ 可調整視角距離
@@ -139,7 +201,7 @@ export class ECP {
     //射線模型觸發DOM
     raycastShowDOM(meshName, domId, renderer, camera, scene) {
 
-        this.RaycastHitMesh(meshName,renderer, camera, scene, (intersects) => {
+        this.RaycastHitMesh(meshName, renderer, camera, scene, (intersects) => {
             if (intersects.length > 0) {
                 const el = document.getElementById(domId);
                 if (el) {
