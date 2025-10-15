@@ -3,6 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport">
     <title>Three.js GLTFLoader Example</title>
     <!-- 網頁用Console -->
     <!-- <script src="https://cdn.bootcdn.net/ajax/libs/vConsole/3.15.0/vconsole.min.js"></script>
@@ -29,14 +30,24 @@
     <div id="MobilePanel">
 
         <div id="TitlePanel">
-            <h1>地形設施模擬</h1>
+            <div id="mainBtn"><p>≡</p></div>
+            <p>地形設施模擬</p>
         </div>
 
+        <div id="left_btn">
+            
+        </div>
 
         <div id="ButtonPanel">
-            <button id="ShowMark">顯示Mark</button>
-            <button id="TubeAni"> 管線動畫</button>
-            <button id="Solo_A"> Solo模式</button>
+            <div id="ShowMark">
+                <p>顯示Mark</p>
+            </div>
+            <div id="TubeAni">
+                <p>管線動畫</p>
+            </div>
+            <div id="Solo_A">
+                <p>Solo模式</p>
+            </div>
         </div>
 
         <div class="InfoPanel" id="InfoPanel_A">
@@ -146,9 +157,9 @@
 
             dom.InfoPanel_A.addEventListener("click", () => { ecp.GSAP_DOM_Active("InfoPanel_A", false) })
             dom.InfoPanel_B.addEventListener("click", () => { ecp.GSAP_DOM_Active("InfoPanel_B", false) })
-            dom.ShowMark.addEventListener("click", () => { MarkAni = !MarkAni; ecp.GSAP_Model_Active("Mark_A", MarkAni, scene); ecp.GSAP_Model_Active("Mark_B", MarkAni, scene);})
+            dom.ShowMark.addEventListener("click", () => { MarkAni = !MarkAni; ecp.GSAP_Model_Active("Mark_A", MarkAni, scene); ecp.GSAP_Model_Active("Mark_B", MarkAni, scene); })
             dom.TubeAni.addEventListener("click", () => { TubeAni = !TubeAni; ecp.Set_UV_Ani_Enabled("Tube", TubeAni); })
-            dom.Solo_A.addEventListener("click", () => { IsSolo_A = !IsSolo_A; ecp.toggleSoloModel("WaterTube", IsSolo_A,scene); })
+            dom.Solo_A.addEventListener("click", () => { IsSolo_A = !IsSolo_A; ecp.toggleSoloModel("WaterTube", IsSolo_A, scene); })
 
         }
 
@@ -171,6 +182,7 @@
         animate();
 
     </script>
+    <script src="main.js"> </script>
 </body>
 
 </html>
