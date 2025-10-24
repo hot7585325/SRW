@@ -1,0 +1,121 @@
+.MeshInfo {
+    position: absolute;
+    z-index: 1000;
+    width: 100vw;
+    height: 100vh;
+    margin: 0;
+    pointer-events: none;
+    background-color: rgba(0, 0, 0, 0);
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#scan {
+    position: absolute;
+    max-width: 90vw;
+    max-height: 90vh;
+    cursor: pointer;
+    pointer-events: auto;
+}
+
+
+#Discripts {
+    position: absolute;
+    display: none;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.524);
+    cursor: pointer;
+    pointer-events: auto;
+
+}
+
+#Discripts img {
+
+    position: relative;
+    left: 50%;
+    width:100vw;
+     transform: translate(-50%, 0%);
+    aspect-ratio: 1080/1830;
+
+}
+
+#info_Panel {
+    display: none;
+    position: relative;
+    background-color: hwb(0 0% 100% / 0.614);
+    pointer-events: auto;
+    margin: auto;
+    overflow-y: auto;
+
+    width: 100vw;
+    max-width: 1080px;
+    height: 100vh;
+}
+
+.info_image {
+    display: none;
+    position: absolute;
+    top: 0;
+    left: 0%;
+    height: auto;
+    width: 100%;
+    max-height: 100%;
+    object-position: center;
+    object-fit: contain;
+    aspect-ratio: 1080/1830;
+}
+
+#info_button {
+    position: absolute;
+    left: 50%;
+    top: 70%;
+    transform: translate(-50%, -50%);
+    width: 20%;
+    cursor: pointer;
+}
+
+#info_button img {
+    width: 100%;
+    height: auto;
+}
+
+#ButtonPanel {
+    display: none;
+    position: absolute;
+    z-index: 1000;
+    bottom: 0;
+    width: 100vw;
+    height: 20vh;
+    background-color: rgba(0, 0, 0, 0.113);
+
+    justify-content: center;
+    align-items: center;
+    gap: 2%;
+}
+
+.CustomBtn {
+    width: auto;
+    max-width: 200px;
+    cursor: pointer;
+    border-width: 2px;
+    border-radius: 30px;
+    background-color: rgb(255, 149, 0);
+    padding: .1em 1em;
+}
+
+.CustomBtn p {
+    text-align: center;
+    justify-content: center;
+    font-weight: bolder;
+    font-size: 1.5em;
+    color: rgb(255, 255, 255);
+}
+
+
+.a-enter-vr-button
+{
+    display: none;
+}

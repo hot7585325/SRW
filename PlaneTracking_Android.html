@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>Android-AR</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <!-- 網頁用Console -->
+  <!-- <script src="https://cdn.bootcdn.net/ajax/libs/vConsole/3.15.0/vconsole.min.js"></script>
+  <script>  var vConsole = new VConsole();  </script> -->
+
+  <!-- GLTFLoader中的import有使用 from 'three';，如果不用importmap會導致找不到模組 -->
+  <script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js"
+  }
+}
+</script>
+
+  <style>
+    body {
+      background-color: black;
+    }
+
+    canvas {
+      touch-action: none;
+    }
+
+    #AR-UI {
+      pointer-events: none;
+      touch-action: none;
+      position: fixed;
+      z-index: 9999;
+      width: 100vw;
+      height: 100vh;
+      background-color: rgba(24, 2, 221, 0);
+      text-align: center;
+    }
+
+    #AniBtn {
+      display: none;
+      position: absolute;
+      font-size: 2em;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    #panel {
+      position: relative;
+      display: none;
+      width: 100vw;
+      height: 100vh;
+      text-align: center;
+      background-color: rgba(0, 0, 0, 0.507);
+    }
+
+    #panel p {
+      position: relative;
+      top: 50%;
+      font-size: 2em;
+    }
+
+    #ARButton {
+      font-size: 5em;
+      width: auto;
+      max-width: 200px;
+      cursor: pointer;
+      border-width: 2px;
+      border-radius: 30px;
+      background-color: rgb(255, 149, 0);
+      padding: .1em 1em;
+    }
+
+    #info_Panel {
+      z-index: 1000;
+      display: none;
+      /* display: block; */
+
+      position: relative;
+      background-color: hwb(0 0% 100%);
+      pointer-events: auto;
+      margin: auto;
+      overflow-y: auto;
+
+      width: 100vw;
+      max-width: 1080px;
+      height: 100vh;
+    }
+
+    .info_image {
+      display: none;
+      /* display: block; */
+
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      height: auto;
+      width: 100%;
+      max-height: 100%;
+      object-position: center;
+      object-fit: contain;
+      aspect-ratio: 1080/1830;
+      transform: translate(-50%, -50%);
+    }
+
+    #info_button {
+      position: absolute;
+      left: 50%;
+      top: 90%;
+      transform: translate(-50%, -50%);
+      width: 30%;
+      cursor: pointer;
+    }
+
+    #info_button img {
+      width: 100%;
+      height: auto;
+    }
+
+    #ButtonPanel {
+      pointer-events: auto;
+
+      display: none;
+      /* display: flex; */
+
+      position: absolute;
+      z-index: 1000;
+      bottom: 10px;
+      width: 100vw;
+      height: 10vh;
+      background-color: rgba(255, 39, 39, 0);
+
+      justify-content: center;
+      align-items: center;
+      flex-direction: row;
+      gap: 2%;
+    }
+
+    .CustomBtn {
+      width: auto;
+      max-width: 200px;
+      cursor: pointer;
+      border-width: 2px;
+      border-radius: 30px;
+      background-color: rgb(255, 149, 0);
+      padding: .1em 1em;
+      user-select: none;
+    }
+
+    .CustomBtn p {
+      pointer-events: none;
+      text-align: center;
+      justify-content: center;
+      font-weight: bolder;
+      font-size: 1.5em;
+      color: rgb(255, 255, 255);
+    }
+
+    .tip {
+
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+
+      width: auto;
+      height: auto;
+      background-color: rgba(134, 134, 42, 0);
+
+      border-color: white;
+      border-width: 5px;
+      border-style: solid;
+      border-radius: 10px;
+
+      color: rgb(255, 255, 255);
+      text-align: center;
+      font-size: 0.8em;
+
+    }
+
+    #tip_ar {
+      position: absolute;
+      z-index: 1000;
+      background-color: rgba(0, 0, 0, 0.534);
+      width: 100%;
+      height: 100%;
+      color: rgb(255, 255, 255);
+      display: none;
+      padding-top: 50%;
+    }
+
+    #tip_ar_p {
+      position: absolute;
+      z-index: 1000;
+      top: 40%;
+      left: 50%;
+      font-size: 1.5em;
+      font-weight: bold;
+      transform: translate(-50%, -50%);
+    }
+  </style>
+
+</head>
+
+<body>
+  <div class="tip">
+    <h1>請點按下方的start AR鈕</h1>
+  </div>
+
+
+
+
+  <div id="AR-UI">
+
+    <div id="tip_ar">
+      <p id="tip_ar_p">請持續移動手機</p>
+    </div>
+
+    <div id="ButtonPanel">
+
+      <div class="CustomBtn" id="Home_button">
+        <p id="Home_text">返回主選單</p>
+      </div>
+
+      <div class="CustomBtn" id="Ani_button">
+        <p id="Ani_text">動畫播放</p>
+      </div>
+    </div>
+
+
+    <div id="panel">
+      <p id="loading_text">模型載入中...</p>
+    </div>
+
+    <div id="info_Panel">
+      <img class="info_image" id="info_1" src="src\image\info_1.png">
+      <img class="info_image" id="info_2" src="src\image\info_2.png">
+      <img class="info_image" id="info_3" src="src\image\info_3.png">
+      <img class="info_image" id="info_4" src="src\image\info_4.png">
+      <img class="info_image" id="info_5" src="src\image\info_5.png">
+      <img class="info_image" id="info_6" src="src\image\info_6.png">
+      <div id="info_button"><img src="src\image\btn_enter.png"></div>
+    </div>
+
+  </div>
+
+
+  <script type="module">
+
+    //#region  依賴與宣告
+
+    // cdn方式(官方)
+    import * as THREE from 'three';
+    import { ARButton } from 'https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/webxr/ARButton.js';
+    import { AnimationMixer } from 'three';
+
+    // ar功能用
+    let container;
+    let camera, scene, renderer;
+    let controller1, controller2;
+
+    let hasPlaced = false;
+    let reticle;
+
+    let hitTestSource = null;
+    let hitTestSourceRequested = false;
+
+    // 模型轉換用
+    const ModelMeshs = [];   //陣列存取模型
+    let placedMesh = new THREE.Group();  //空物件 手勢控制用
+    let initialDistance = null;
+    let initialAngle = null;
+    let lastScale = 1;
+    let lastRotationY = 0;
+
+    // 動畫用
+    const clock = new THREE.Clock();
+    const mixers = [];   //陣列存取動畫
+    const actions = [];
+
+    let IsPlayAni = false;
+
+    //射線用
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2(); // 或是使用者頭部方向、手勢等
+    const interactableObjects = [];
+
+
+    //pc測試用
+    let isMouseDown = false;
+    let prevMouseX = 0;
+    let rotateSpeed = 0.01;
+    let moveSpeed = 0.05;
+
+    let isRightMouseDown = false;
+    const zoomSpeed = 0.1;
+
+    //ui dom用
+    const info_button = document.getElementById("info_button")
+    const ButtonPanel = document.querySelector("#ButtonPanel")
+    const Ani_button = document.querySelector("#Ani_button")
+    const Home_button = document.querySelector("#Home_button")
+    const info_Panel = document.getElementById("info_Panel")
+    const info_1 = document.getElementById("info_1")
+    const info_2 = document.getElementById("info_2")
+    const info_3 = document.getElementById("info_3")
+    const info_4 = document.getElementById("info_4")
+    const info_5 = document.getElementById("info_5")
+    const info_6 = document.getElementById("info_6")
+    const tip_ar = document.getElementById("tip_ar")
+    const tip_ar_p = document.getElementById("tip_ar_p")
+    //#endregion
+
+
+    //執行區塊
+    Main();
+    DOMCtrl();
+
+
+    //主執行
+    function Main() {
+
+      //場景建構
+      container = document.createElement('div');
+      document.body.appendChild(container);
+      scene = new THREE.Scene();
+      camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
+      const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 3);
+      light.position.set(0.5, 1, 0.25);
+      scene.add(light);
+      scene.add(placedMesh);
+
+      //three接管webxr 渲染方式
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer.setPixelRatio(window.devicePixelRatio);
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setAnimationLoop(animate);
+      renderer.xr.enabled = true;
+      container.appendChild(renderer.domElement);
+
+      //Three.js 提供的AR按鈕，會在click時 去向webxr請求功能模組
+      const arButton = ARButton.createButton(renderer, { requiredFeatures: ['hit-test'], optionalFeatures: ['dom-overlay'], domOverlay: { root: document.getElementById('AR-UI') } });
+      arButton.addEventListener("click", () => { toggleDisplayById("tip_ar") })
+      document.body.appendChild(arButton);
+      console.log('ARButton created:', arButton);
+
+
+      //平面偵測圓環創建
+      CreateDetectionRing();
+
+
+      //模型測試區域PC用
+      // TouchCreateModel();
+      // enablePCControls();
+
+      //取得控制器，並應用事件(在ar狀態才會啟用)
+      controller1 = renderer.xr.getController(0);
+      controller1.addEventListener('select', TouchCreateModel);
+      scene.add(controller1);
+
+      controller2 = renderer.xr.getController(1);
+      controller2.addEventListener('select', TouchCreateModel);
+      scene.add(controller2);
+
+      // 手勢控制
+      GestureCtrl();
+
+      //重製螢幕size
+      window.addEventListener('resize', onWindowResize);
+
+    }
+
+    // 啟用 PC 模式控制（非 AR）
+    function enablePCControls() {
+      document.addEventListener('keydown', (e) => {
+        if (!placedMesh) return;
+
+        switch (e.key.toLowerCase()) {
+          case 'w':
+            placedMesh.position.z -= moveSpeed;
+            break;
+          case 's':
+            placedMesh.position.z += moveSpeed;
+            break;
+          case 'a':
+            placedMesh.position.x -= moveSpeed;
+            break;
+          case 'd':
+            placedMesh.position.x += moveSpeed;
+            break;
+          case 'q':
+            placedMesh.position.y += moveSpeed;
+            break;
+          case 'e':
+            placedMesh.position.y -= moveSpeed;
+            break;
+        }
+      });
+
+      document.addEventListener('mousedown', (e) => {
+        isMouseDown = true;
+        prevMouseX = e.clientX;
+      });
+
+      document.addEventListener('mouseup', () => {
+        isMouseDown = false;
+      });
+
+      document.addEventListener('mousemove', (e) => {
+        if (!isMouseDown || !placedMesh) return;
+
+        const deltaX = e.clientX - prevMouseX;
+        placedMesh.rotation.y += deltaX * rotateSpeed;
+        prevMouseX = e.clientX;
+      });
+
+      // 滾輪控制遠近（可選擇 scale 或 position.z）
+      document.addEventListener('wheel', (e) => {
+        if (!placedMesh) return;
+
+        const delta = e.deltaY > 0 ? -zoomSpeed : zoomSpeed;
+        placedMesh.scale.multiplyScalar(1 + delta); // 使用 scale 放大縮小
+        // 或使用 position.z 模擬遠近：placedMesh.position.z += delta;
+      });
+
+      // 滑鼠右鍵按下
+      document.addEventListener('mousedown', (e) => {
+        if (e.button === 2) { // 右鍵
+          isRightMouseDown = true;
+          prevMouseX = e.clientX;
+        }
+      });
+
+      // 滑鼠右鍵放開
+      document.addEventListener('mouseup', (e) => {
+        if (e.button === 2) {
+          isRightMouseDown = false;
+        }
+      });
+
+      // 滑鼠移動旋轉模型
+      document.addEventListener('mousemove', (e) => {
+        if (!isRightMouseDown || !placedMesh) return;
+
+        const deltaX = e.clientX - prevMouseX;
+        placedMesh.rotation.y += deltaX * rotateSpeed;
+        prevMouseX = e.clientX;
+      });
+
+      // 禁止右鍵選單干擾
+      document.addEventListener('contextmenu', (e) => e.preventDefault());
+
+      console.log("✅ PC 控制模式已啟用");
+    }
+
+    //點擊產生模型，把要load的模型都放在裡面
+    async function TouchCreateModel() {
+      if (hasPlaced) return; // 已經放置過了，不再執行
+      if (!reticle.visible) return;  //測試時註解
+
+      toggleDisplayById("tip_ar");
+      //設置placedMesh的位置，否則會再相機的中心點
+      placedMesh.position.setFromMatrixPosition(reticle.matrix);
+      placedMesh.quaternion.setFromRotationMatrix(reticle.matrix);
+      placedMesh.scale.setScalar(.5);
+
+
+      toggleDisplayById("panel") //首次呼叫會打開
+      const module = await import('https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/loaders/GLTFLoader.js');
+      const GLTFLoader = module.GLTFLoader;
+      const loader = new GLTFLoader();
+
+
+      //主模型
+      loader.load(
+        'src/Model/SRW.glb',
+        function (gltf) {
+          Set_Model_Attribute(gltf, 0);
+          ButtonPanel.style.display = "flex"
+          toggleDisplayById("panel")  //再次呼叫會關閉
+          console.log('ar_hotpoint成功加入場景');
+        },
+        function (xhr) {
+          loading_text.textContent = "模型載入進度 " + (xhr.loaded / xhr.total * 100).toFixed(0) + "%";
+        },
+        function (error) {
+          console.error('ar_hotpoint載入失敗:', error);
+        }
+      );
+
+      //點按模型
+      loader.load('src/model/hotspot.glb', function (gltf) {
+        Set_Model_Attribute(gltf, 0);
+        console.log('hotspot成功加入場景');
+        Add_InteractableObjects("hotsport_001");
+        Add_InteractableObjects("hotsport_002");
+        Add_InteractableObjects("hotsport_003");
+        Add_InteractableObjects("hotsport_004");
+        Add_InteractableObjects("hotsport_005");
+        Add_InteractableObjects("hotsport_006");
+      },
+        function (xhr) {
+
+        },
+        function (error) {
+          console.error('hotspot載入失敗:', error);
+        })
+
+
+
+      reticle.visible = false;
+      hasPlaced = true; // 設定旗標，阻止再次放置
+
+    }
+
+    //設定model相關參數(不需要使用 scene.add(_model)，因為作為容器的placedMesh已經實作了)
+    function Set_Model_Attribute(gltf, AniIndex = 0) {
+
+      const _model = gltf.scene;
+      //加到以實作scene.add，的容器中
+      placedMesh.add(_model);
+
+      //轉換
+      _model.position.set(0, 0, 0); // 相對於 placedMesh 的位置
+      _model.quaternion.identity(); // 清除旋轉（可選）
+      _model.scale.setScalar(0.5);  // 設定縮放
+
+
+      //動畫
+      const _mixer = new AnimationMixer(_model);
+      gltf.animations.forEach((clip) => {
+        const _action = _mixer.clipAction(clip);
+        actions.push(_action);
+      });
+
+
+      // 儲存到陣列
+      ModelMeshs.push(_model)
+      mixers.push(_mixer);
+
+
+
+      return _model;
+    }
+
+    // 手勢控制(主要控制placedMesh 容器，與射線綁定touch事件)
+    function GestureCtrl() {
+      document.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 2 && placedMesh) {
+          console.log("觸碰touchstart")
+          const dx = e.touches[1].clientX - e.touches[0].clientX;
+          const dy = e.touches[1].clientY - e.touches[0].clientY;
+          initialDistance = Math.hypot(dx, dy);
+          initialAngle = Math.atan2(dy, dx);
+        }
+      });
+
+      document.addEventListener('touchmove', (e) => {
+        if (e.touches.length === 2 && placedMesh) {
+          console.log("觸碰touchmove")
+          const dx = e.touches[1].clientX - e.touches[0].clientX;
+          const dy = e.touches[1].clientY - e.touches[0].clientY;
+          const currentDistance = Math.hypot(dx, dy);
+          const currentAngle = Math.atan2(dy, dx);
+
+          // 縮放
+          const scaleFactor = currentDistance / initialDistance;
+          placedMesh.scale.setScalar(lastScale * scaleFactor);
+
+          // Y軸旋轉
+          const angleDelta = currentAngle - initialAngle;
+          placedMesh.rotation.y = lastRotationY + angleDelta;
+
+          // 可選：即時更新初始值（讓手勢更流暢）
+          // initialDistance = currentDistance;
+          // initialAngle = currentAngle;
+        }
+
+        //射線(觸控)
+        window.addEventListener('touchstart', (event) => {
+          // 計算觸控點位置
+          const touch = event.touches[0];
+          mouse.x = (touch.clientX / window.innerWidth) * 2 - 1;
+          mouse.y = -(touch.clientY / window.innerHeight) * 2 + 1;
+          RatCastCtrl(); // 執行射線判定
+        });
+      });
+
+
+      //射線(滑鼠)
+      window.addEventListener('mousedown', (event) => {
+        // 將滑鼠座標轉換為 NDC（Normalized Device Coordinates）
+        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+        RatCastCtrl(); // 執行射線判定
+      });
+
+      document.addEventListener('touchend', (e) => {
+        if (placedMesh) {
+          lastScale = placedMesh.scale.x; // 假設等比例縮放
+          lastRotationY = placedMesh.rotation.y;
+        }
+      });
+    }
+
+    //創建偵測圓環
+    function CreateDetectionRing() {
+      reticle = new THREE.Mesh(
+        new THREE.RingGeometry(0.15, 0.2, 32).rotateX(- Math.PI / 2),
+        new THREE.MeshBasicMaterial()
+      );
+      reticle.matrixAutoUpdate = false;
+      reticle.visible = false;
+      scene.add(reticle);
+      console.log("偵測點已創建");
+    }
+
+    //加入可射線互動陣列(在點按模型 loaded後呼叫)
+    function Add_InteractableObjects(MeshName) {
+      const HitMesh = scene.getObjectByName(MeshName);
+      interactableObjects.push(HitMesh);
+      interactableObjects.forEach(mesh => console.log("可互動物件=" + mesh.name));
+    }
+
+    //射線控制
+    function RatCastCtrl() {
+
+      console.log("觸發射線")
+      const xrCamera = renderer.xr.getCamera(camera);
+      raycaster.setFromCamera(mouse, xrCamera);
+      // 在射線判定時使用整個陣列
+      const intersects = raycaster.intersectObjects(interactableObjects, true);
+
+      for (let i = 0; i < intersects.length; i++) {
+        info_Panel.style.display = 'block'
+        const hitObject = intersects[i].object;
+        if (hitObject.name === 'hotsport_001') { console.log('碰撞到 hotsport_001'); info_1.style.display = 'block' }
+        if (hitObject.name === 'hotsport_002') { console.log('碰撞到 hotsport_002'); info_2.style.display = 'block' }
+        if (hitObject.name === 'hotsport_003') { console.log('碰撞到 hotsport_003'); info_3.style.display = 'block' }
+        if (hitObject.name === 'hotsport_004') { console.log('碰撞到 hotsport_004'); info_4.style.display = 'block' }
+        if (hitObject.name === 'hotsport_005') { console.log('碰撞到 hotsport_005'); info_5.style.display = 'block' }
+        if (hitObject.name === 'hotsport_006') { console.log('碰撞到 hotsport_006'); info_6.style.display = 'block' }
+      }
+    }
+
+    //退出模式後行為
+    function onWindowResize() {
+
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      console.log("退出ar模式");
+    }
+
+    //ar渲染與啟用參考空間
+    function animate(timestamp, frame) {
+      if (frame) {
+        const referenceSpace = renderer.xr.getReferenceSpace();
+        const session = renderer.xr.getSession();
+
+        if (!hitTestSourceRequested) {
+          session.requestReferenceSpace('viewer').then((referenceSpace) => {
+            session.requestHitTestSource({ space: referenceSpace }).then((source) => {
+              hitTestSource = source;
+            });
+          });
+
+          session.addEventListener('end', () => {
+            hitTestSourceRequested = false;
+            hitTestSource = null;
+          });
+
+          hitTestSourceRequested = true;
+        }
+
+        if (hitTestSource) {
+
+          const hitTestResults = frame.getHitTestResults(hitTestSource);
+          if (hitTestResults.length && hasPlaced == false) {
+            const hit = hitTestResults[0];
+            reticle.visible = true;
+            tip_ar_p.innerText = "請點按螢幕";
+            reticle.matrix.fromArray(hit.getPose(referenceSpace).transform.matrix);
+          } else {
+            reticle.visible = false;
+          }
+        }
+      }
+
+      // 更新動畫時間軸
+      const delta = clock.getDelta();
+      mixers.forEach(mixer => mixer.update(delta));
+
+      renderer.render(scene, camera);
+    }
+
+    //按鈕控制
+    function DOMCtrl() {
+
+      //Info
+      info_button.addEventListener("click", () => { info_Panel.style.display = "none"; console.log("關閉info_Panel") })
+      info_button.addEventListener("click", () => { info_1.style.display = "none"; console.log("關閉物件資訊_info_1") })
+      info_button.addEventListener("click", () => { info_2.style.display = "none"; console.log("關閉物件資訊_info_2") })
+      info_button.addEventListener("click", () => { info_3.style.display = "none"; console.log("關閉物件資訊_info_3") })
+      info_button.addEventListener("click", () => { info_4.style.display = "none"; console.log("關閉物件資訊_info_4") })
+      info_button.addEventListener("click", () => { info_5.style.display = "none"; console.log("關閉物件資訊_info_5") })
+      info_button.addEventListener("click", () => { info_6.style.display = "none"; console.log("關閉物件資訊_info_6") })
+
+      Home_button.addEventListener("click", () => { window.location.href = 'index.html' })
+
+      //動畫按鈕
+      Ani_button.addEventListener("click", () => {
+        IsPlayAni = !IsPlayAni;
+        // console.log("IsPlayAni=" + IsPlayAni);
+        if (IsPlayAni) {
+          actions.forEach(action => action.play())
+          // console.log("播放動畫");
+        } else {
+          actions.forEach(action => action.stop())
+          // console.log("停止動畫");
+        }
+      });
+
+
+    }
+
+    // 切換 dom 顯示
+    function toggleDisplayById(id, state = "block") {
+      const element = document.getElementById(id);
+      if (!element) {
+        console.warn(`找不到 id 為 "${id}" 的元素`);
+        return;
+      }
+
+      // 取得當前顯示狀態（計算後樣式）
+      const currentDisplay = window.getComputedStyle(element).display;
+
+      if (currentDisplay === "none") {
+        // 顯示
+        element.style.display = state;
+      } else {
+        // 隱藏
+        element.style.display = "none";
+      }
+    }
+
+
+  </script>
+
+</body>
+
+</html>

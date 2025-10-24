@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- aframe CDN -->
+  <!-- <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script> -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/aframe/1.7.0/aframe.min.js"
+    integrity="sha512-QRe0tMdbQUsh9BJOh+ijnsJaLoO68ku2a9/7HmQCIvqpeWRkqc4Ee0Ohjvt6y7Fx/ShFTLoL/H3ZgxZrXB7ERA=="
+    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+  <!-- mindAR CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+
+  <!-- glb動畫 CDN -->
+  <script src="https://cdn.jsdelivr.net/gh/c-frame/aframe-extras@7.6.0/dist/aframe-extras.min.js"></script>
+
+  <!-- 粒子效果 -->
+  <!-- <script src="https://cdn.jsdelivr.net/npm/@ideaspacevr/aframe-particle-system-component@latest"></script> -->
+
+  <!-- 自製組件 -->
+  <script src="src\js\opa-ctrl.js"> </script>
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/gsap.min.js'
+    integrity='sha512-NcZdtrT77bJr4STcmsGAESr06BYGE8woZdSdEgqnpyqac7sugNO+Tr4bGwGF3MsnEkGKhU2KL2xh6Ec+BqsaHA=='
+    crossorigin='anonymous'></script>
+  <link rel="stylesheet" href="src\css\styles_I.css">
+
+</head>
+
+<body>
+
+  <!-- DOM區域 -->
+  <div id="ButtonPanel">
+
+    <div class="CustomBtn" id="Home_button">
+      <p id="Home_text">返回主選單</p>
+    </div>
+
+    <div class="CustomBtn" id="Ani_button">
+      <p id="Ani_text">動畫播放</p>
+    </div>
+    <div class="CustomBtn" id="Name_button">
+      <p id="Name_text">名稱顯示</p>
+    </div>
+  </div>
+
+
+  <div class="MeshInfo" id="DOMCanvas">
+    <img id="scan" src="src\image\scan.png">
+    <div id="Discripts"><img src="src\image\Discripts.png"> </div>
+
+    <div id="info_Panel">
+      <!-- <img class="info_image" id="info_1" src="src\image\info_1.png">
+      <img class="info_image" id="info_2" src="src\image\info_2.png">
+      <img class="info_image" id="info_3" src="src\image\info_3.png">
+      <img class="info_image" id="info_4" src="src\image\info_4.png">
+      <img class="info_image" id="info_5" src="src\image\info_5.png">
+      <img class="info_image" id="info_6" src="src\image\info_6.png">
+      <div id="info_button"><img src="src\image\btn_enter.png"></div> -->
+    </div>
+  </div>
+
+
+  <!-- 圖片偵測SCENE -->
+  <a-scene color-space="sRGB" renderer="colorManagement: false, physicallyCorrectLights" vr-mode-ui="enabled: false"
+    device-orientation-permission-ui="enabled: false"
+    mindar-image="imageTargetSrc:targets.mind; maxTrack: 1 filterMinCF: 0.0001; filterBeta: 0.0001; uiScanning:src\image\scan.png "
+    cursor="rayOrigin: mouse" raycaster="objects: .clickable">
+
+    <!-- 聲音組件會與mindar-image-target衝突，所以不掛載在同一個物件上(預計透過事件通知) -->
+    <a-entity active-sound="src:src\audio\tool.mp3; targetid :model_1"> </a-entity>
+
+
+    <!-- 地形模型 -->
+    <a-entity id="model_1" position="0 -0.5 0" scale=".0003 .0003 .0003" mindar-image-target="targetIndex: 0"
+      targetevent-global>
+      <a-entity touch-drag-rotate-scale="rotationCoordinate:world" reset-transform="rscale:.5 .5 .5">
+
+        <!-- 主要模型 -->
+        <a-gltf-model src="src\Model\SRW.glb" active-ani="src:*"></a-gltf-model>
+
+        <!-- 按鈕模型 -->
+        <!-- <a-gltf-model id="Trigger_Model" src="src\model\hotspot.glb" active-ani="sec:2 src:*"
+          switch-model="idname:#Name_button; IsVisible:true" mesh-info__1="meshname:hotsport_001; idname:#info_1"
+          mesh-info__2="meshname:hotsport_002; idname:#info_2" mesh-info__3="meshname:hotsport_003; idname:#info_3"
+          mesh-info__4="meshname:hotsport_004; idname:#info_4" mesh-info__5="meshname:hotsport_005; idname:#info_5"
+          mesh-info__6="meshname:hotsport_006; idname:#info_6">
+        </a-gltf-model> -->
+
+        <!-- Marker模型 -->
+        <!-- <a-gltf-model id="Maeker_Model" src="src\model\Marker.glb"
+          switch-model="idname:#Name_button; IsVisible:false"></a-gltf-model> -->
+
+      </a-entity>
+    </a-entity>
+
+    <!-- 鸚鵡模型 -->
+    <a-entity id="model_2" position="0 -0.5 0" scale="1 1 1" mindar-image-target="targetIndex: 1"
+      targetevent-global>
+      <a-entity touch-drag-rotate-scale="rotationCoordinate:world" reset-transform="rscale:1 1 1">
+
+        <!-- 主要模型 -->
+        <a-gltf-model src="src\Model\Parrot.glb" active-ani="src:*"></a-gltf-model>
+
+      </a-entity>
+    </a-entity>
+
+    <!-- 攝影機 -->
+    <a-camera position="0 0 .2" look-controls-enabled="false" ray-interactive="objclass: .recive-ray"></a-camera>
+
+  </a-scene>
+
+
+
+
+
+
+  <!-- DOM依賴腳本  -->
+  <script src="src\js\main.js"> </script>
+  <script src="src\js\ImageTrackingMode.js"> </script>
+
+</body>
+
+</html>
